@@ -1,0 +1,36 @@
+name: 'Varredura e Abertura de Issue'
+on:
+  push:
+    branches: [ "main", "develop", "feature/*" ]
+
+# Permissões necessárias para que o bot possa ler o código e escrever no painel de Issues
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  scan-and-report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout do repositório'
+        uses: actions/checkout@v4
+
+      - name: 'Executar Varredura de Código (Scanner)'
+        id: scanner
+        # Aqui você colocaria o scanner real (como ESLint, njsscan ou npm test).
+        # O comando 'exit 1' força uma falha no terminal para acionarmos o passo seguinte.
+        run: |
+          echo "Iniciando análise de segurança e sintaxe..."
+          echo "Problema crítico encontrado no código!"
+          exit 1
+
+      - name: 'Criar Issue Automática'
+        # A diretiva failure() garante que este passo SÓ rode se o passo anterior quebrar
+        if: failure()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue create \
+            --title "🚨 Falha de Código detectada na branch: ${{ github.ref_name }}" \
+            --body "A esteira de CI detectou um erro no commit **${{ github.sha }}** enviado por **@${{ github.actor }}**.<br><br>Por favor, acesse a aba [Actions](https://github.com/${{ github.repository }}/actions) para ler os logs do terminal, corrigir o problema e enviar um novo push.<br><br>_Issue criada automaticamente via GitHub Actions._" \
+            --label "bug,infra-devops"
